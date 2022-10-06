@@ -1,0 +1,16 @@
+{
+  "name": "@westudents/halo-chat-core-web",
+  "version": "0.0.1",
+  "description": "Chat SDK for web",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "author": "Westudents Tech Team <tech@westudents.it> (https://developers.westudents.it)",
+  "license": "MIT",
+  "devDependencies": {
+    "firebase": "^9.10.0",
+    "typescript": "^4.8.4"
+  }
+}
