@@ -1,4 +1,13 @@
-import { getFirestore, collection, doc, getDoc, addDoc, setDoc, serverTimestamp , Timestamp, onSnapshot } from 'firebase/firestore'
+import {
+    getFirestore,
+    collection,
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp,
+    Timestamp,
+    onSnapshot,
+} from 'firebase/firestore'
 
 import type { User } from './types'
 import { CollectionName } from './utils'
@@ -20,7 +29,7 @@ export const createUser = async (payload: CreateUserPayload): Promise<User> => {
         image: payload.image || null,
         created_at: serverTimestamp() as Timestamp,
     }
-   
+
     await setDoc(doc(firestoreDB, CollectionName.USERS, payload.id), user)
 
     return user
@@ -31,12 +40,14 @@ export const getUser = async (userId: string): Promise<User> => {
     return docSnap.data() as User
 }
 
-
 export const fetchUsers = (onUsersUpdate: (users: User[]) => void, onError: (error: Error) => void): void => {
-
     const collectionRef = collection(firestoreDB, CollectionName.USERS)
 
-    onSnapshot(collectionRef, (snapshot) => {
-        onUsersUpdate(snapshot.docs.map((u) => u.data() as User))
-    }, onError)
+    onSnapshot(
+        collectionRef,
+        (snapshot) => {
+            onUsersUpdate(snapshot.docs.map((u) => u.data() as User))
+        },
+        onError,
+    )
 }
