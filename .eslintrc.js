@@ -31,6 +31,8 @@ module.exports = {
         'import/extensions': 'off',
         'import/no-extraneous-dependencies': 'off',
         'no-use-before-define': 'off',
+        'prefer-template': 'off',
+        'default-case': 'off',
     },
     overrides: [
         {
