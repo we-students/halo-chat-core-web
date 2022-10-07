@@ -19,10 +19,10 @@ import { Agent, MessageType, Room, User } from './types'
 import { CollectionName, MessageTypeEmoji, userToPreview } from './utils'
 import { getAgent } from './agent'
 
-import { auth, firestore, storage } from './firebase'
+import firebase from './firebase'
 
 export const createRoomWithUsers = async (users: User[], name?: string): Promise<Room> => {
-    const currentFirebaseUser = auth.currentUser
+    const currentFirebaseUser = firebase.auth!.currentUser
     if (currentFirebaseUser === null) throw new Error('createRoomWithUsers: Firebase user not authenticated')
     const creator = await getUser(currentFirebaseUser.uid)
     if (creator === null) throw new Error('createRoomWithUsers: user not exists')
@@ -32,7 +32,7 @@ export const createRoomWithUsers = async (users: User[], name?: string): Promise
     if (users.length === 1) {
         const snapshot = await getDocs(
             query(
-                collection(firestore, CollectionName.ROOMS),
+                collection(firebase.firestore!, CollectionName.ROOMS),
                 where('scope', '==', 'PRIVATE'),
                 where('users_ids', 'array-contains', currentFirebaseUser.uid),
             ),
@@ -42,7 +42,7 @@ export const createRoomWithUsers = async (users: User[], name?: string): Promise
         if (existingRoom) return existingRoom.data() as Room
     }
 
-    const docRef = doc(firestore, CollectionName.ROOMS)
+    const docRef = doc(firebase.firestore!, CollectionName.ROOMS)
 
     const room: Room = {
         id: docRef.id,
@@ -63,12 +63,12 @@ export const createRoomWithUsers = async (users: User[], name?: string): Promise
 }
 
 export const createRoomWithAgent = async (tag: string): Promise<Room> => {
-    const currentFirebaseUser = auth.currentUser
+    const currentFirebaseUser = firebase.auth!.currentUser
     if (currentFirebaseUser === null) throw new Error('createRoomWithUsers: Firebase user not authenticated')
     const creator = await getUser(currentFirebaseUser.uid)
     if (creator === null) throw new Error('createRoomWithUsers: user not exists')
 
-    const docRef = doc(firestore, CollectionName.ROOMS)
+    const docRef = doc(firebase.firestore!, CollectionName.ROOMS)
 
     const room: Room = {
         id: docRef.id,
@@ -87,13 +87,13 @@ export const createRoomWithAgent = async (tag: string): Promise<Room> => {
 }
 
 export const joinAgent = async (roomId: string): Promise<Room> => {
-    const currentFirebaseUser = auth.currentUser
+    const currentFirebaseUser = firebase.auth!.currentUser
     if (currentFirebaseUser === null) throw new Error('createRoomWithUsers: Firebase user not authenticated')
 
     const agent = await getAgent(currentFirebaseUser.uid)
     if (agent === null) throw new Error('joinAgent: agent not exists')
 
-    await updateDoc(doc(firestore, CollectionName.ROOMS, roomId), {
+    await updateDoc(doc(firebase.firestore!, CollectionName.ROOMS, roomId), {
         agent: {
             id: agent.id,
             first_name: agent.first_name,
@@ -102,17 +102,17 @@ export const joinAgent = async (roomId: string): Promise<Room> => {
         },
     })
 
-    const res = await getDoc(doc(firestore, CollectionName.ROOMS, roomId))
+    const res = await getDoc(doc(firebase.firestore!, CollectionName.ROOMS, roomId))
     return res.data() as Room
 }
 
 export const fetchRooms = (onRoomsUpdate: (rooms: Room[]) => void, onError: (error: Error) => void): void => {
-    const currentFirebaseUser = auth.currentUser
+    const currentFirebaseUser = firebase.auth!.currentUser
     if (currentFirebaseUser === null) throw new Error('createRoomWithUsers: Firebase user not authenticated')
 
     onSnapshot(
         query(
-            collection(firestore, CollectionName.ROOMS),
+            collection(firebase.firestore!, CollectionName.ROOMS),
             where('users_ids', 'array-contains', currentFirebaseUser.uid),
         ),
         (snapshop) => {
@@ -127,12 +127,12 @@ export const fetchAgentRooms = (
     onRoomsUpdate: (rooms: Room[]) => void,
     onError: (error: Error) => void,
 ): void => {
-    const currentFirebaseUser = auth.currentUser
+    const currentFirebaseUser = firebase.auth!.currentUser
     if (currentFirebaseUser === null) throw new Error('createRoomWithUsers: Firebase user not authenticated')
 
     onSnapshot(
         query(
-            collection(firestore, CollectionName.ROOMS),
+            collection(firebase.firestore!, CollectionName.ROOMS),
             where('scope', '==', 'AGENT'),
             where('tag', 'in', agent.tags),
         ),
@@ -144,7 +144,7 @@ export const fetchAgentRooms = (
 }
 
 const finalizeSendMessage = async (roomId: string, messageData: any): Promise<void> => {
-    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firebase.firestore!, CollectionName.ROOMS, roomId)
     const messageRef = doc(collection(roomRef, CollectionName.MESSAGES))
     const message: MessageType.Any = {
         id: messageRef.id,
@@ -161,7 +161,7 @@ const finalizeSendMessage = async (roomId: string, messageData: any): Promise<vo
         sent_by: message.created_by,
     }
 
-    await runTransaction(firestore, async (transaction) => {
+    await runTransaction(firebase.firestore!, async (transaction) => {
         await transaction.set(messageRef, message)
         await transaction.update(roomRef, {
             last_message: messagePreview,
@@ -178,7 +178,7 @@ export const sendTextMessage = async ({
     text: string
     metadata?: Record<string, any>
 }): Promise<void> => {
-    const currentFirebaseUser = auth.currentUser
+    const currentFirebaseUser = firebase.auth!.currentUser
     if (currentFirebaseUser === null) throw new Error('createRoomWithUsers: Firebase user not authenticated')
 
     const message = {
@@ -212,7 +212,7 @@ export const sendFileMessage = async ({
     metadata?: Record<string, any>
 }): Promise<void> => {
     // todo:
-    // const currentFirebaseUser = auth.currentUser
+    // const currentFirebaseUser = firebase.auth!.currentUser
     // if (currentFirebaseUser === null) throw new Error('createRoomWithUsers: Firebase user not authenticated')
     // let content_type: 'AUDIO' | 'VIDEO' | 'IMAGE' | 'CUSTOM' = 'CUSTOM'
     // if (file.mimeType.match(/^image\//)) {
@@ -242,8 +242,8 @@ export const sendFileMessage = async ({
     //     room: roomId,
     //     content_type,
     //     text: text || null,
-    //     created_at: firestore.FieldValue.serverTimestamp() as FirebaseFirestoreTypes.Timestamp,
-    //     updated_at: firestore.FieldValue.serverTimestamp() as FirebaseFirestoreTypes.Timestamp,
+    //     created_at: firebase.firestore!.FieldValue.serverTimestamp() as Firebasefirebase.Firestore!Types.Timestamp,
+    //     updated_at: firebase.firestore!.FieldValue.serverTimestamp() as Firebasefirebase.Firestore!Types.Timestamp,
     //     created_by: currentFirebaseUser.uid,
     //     file: {
     //         mimeType: file.mimeType,
@@ -272,7 +272,7 @@ export const sendFileMessageWithUrl = async ({
     }
     metadata?: Record<string, any>
 }): Promise<void> => {
-    const currentFirebaseUser = auth.currentUser
+    const currentFirebaseUser = firebase.auth!.currentUser
     if (currentFirebaseUser === null) throw new Error('createRoomWithUsers: Firebase user not authenticated')
 
     let content_type: 'AUDIO' | 'VIDEO' | 'IMAGE' | 'CUSTOM' = 'CUSTOM'
@@ -305,19 +305,19 @@ export const sendFileMessageWithUrl = async ({
 }
 
 export const messageDelivered = async (roomId: string, messageId: string): Promise<void> => {
-    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firebase.firestore!, CollectionName.ROOMS, roomId)
 
     await updateDoc(doc(roomRef, CollectionName.MESSAGES, messageId), { delivered: true })
 }
 
 export const messageRead = async (roomId: string, messageId: string): Promise<void> => {
-    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firebase.firestore!, CollectionName.ROOMS, roomId)
 
     await updateDoc(doc(roomRef, CollectionName.MESSAGES, messageId), { read: true })
 }
 
 export const deleteMessage = async (roomId: string, messageId: string): Promise<void> => {
-    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firebase.firestore!, CollectionName.ROOMS, roomId)
 
     await deleteDoc(doc(roomRef, CollectionName.MESSAGES, messageId))
 }
@@ -327,7 +327,7 @@ export const fetchMessages = (
     onMessagesUpdate: (messages: MessageType.Any[]) => void,
     onError: (error: Error) => void,
 ): void => {
-    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firebase.firestore!, CollectionName.ROOMS, roomId)
 
     onSnapshot(
         collection(roomRef, CollectionName.MESSAGES),

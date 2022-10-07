@@ -19,6 +19,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "baseUrl": "./",
+    "paths": {
+      "@westudents/halo-chat-core-web": ["./example/react-example/node_modules/@westudents/halo-chat-core-web/index"]
+    },
   },
   "include": [
     "src"

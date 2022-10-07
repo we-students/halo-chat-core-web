@@ -33,6 +33,8 @@ module.exports = {
         'no-use-before-define': 'off',
         'prefer-template': 'off',
         'default-case': 'off',
+        'lines-between-class-members': 'off',
+        'class-methods-use-this': 'off',
     },
     overrides: [
         {

@@ -4,7 +4,7 @@ import { signInAnonymously } from 'firebase/auth'
 import type { User } from './types'
 import { CollectionName } from './utils'
 
-import { firestore, auth } from './firebase'
+import firebase from './firebase'
 
 interface LoginPayload {
     firstName?: string
@@ -19,7 +19,7 @@ interface CreateUserPayload {
 }
 
 export const login = async (payload: LoginPayload): Promise<User> => {
-    const credentials = await signInAnonymously(auth)
+    const credentials = await signInAnonymously(firebase.auth!)
     const user = await createUser({ id: credentials.user.uid, ...payload })
     return user
 }
@@ -33,18 +33,18 @@ export const createUser = async (payload: CreateUserPayload): Promise<User> => {
         created_at: serverTimestamp() as Timestamp,
     }
 
-    await setDoc(doc(firestore, CollectionName.USERS, payload.id), user)
+    await setDoc(doc(firebase.firestore!, CollectionName.USERS, payload.id), user)
 
     return user
 }
 
 export const getUser = async (userId: string): Promise<User> => {
-    const docSnap = await getDoc(doc(firestore, CollectionName.USERS, userId))
+    const docSnap = await getDoc(doc(firebase.firestore!, CollectionName.USERS, userId))
     return docSnap.data() as User
 }
 
 export const fetchUsers = (onUsersUpdate: (users: User[]) => void, onError: (error: Error) => void): void => {
-    const collectionRef = collection(firestore, CollectionName.USERS)
+    const collectionRef = collection(firebase.firestore!, CollectionName.USERS)
 
     onSnapshot(
         collectionRef,

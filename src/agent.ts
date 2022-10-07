@@ -4,7 +4,7 @@ import { signInAnonymously } from 'firebase/auth'
 import { Agent } from './types'
 import { CollectionName } from './utils'
 
-import { firestore, auth } from './firebase'
+import firebase from './firebase'
 
 interface LoginPayload {
     firstName: string
@@ -21,7 +21,7 @@ interface CreateAgentPayload {
 }
 
 export const login = async (payload: LoginPayload): Promise<Agent> => {
-    const credentials = await signInAnonymously(auth)
+    const credentials = await signInAnonymously(firebase.auth!)
     const user = await createAgent({ id: credentials.user.uid, ...payload })
     return user
 }
@@ -35,11 +35,11 @@ export const createAgent = async (payload: CreateAgentPayload): Promise<Agent> =
         tags: payload.tags,
         created_at: serverTimestamp() as Timestamp,
     }
-    await setDoc(doc(firestore, CollectionName.AGENTS, payload.id), agent)
+    await setDoc(doc(firebase.firestore!, CollectionName.AGENTS, payload.id), agent)
     return agent
 }
 
 export const getAgent = async (agentId: string): Promise<Agent> => {
-    const snapshot = await getDoc(doc(firestore, CollectionName.AGENTS, agentId))
+    const snapshot = await getDoc(doc(firebase.firestore!, CollectionName.AGENTS, agentId))
     return snapshot.data() as Agent
 }

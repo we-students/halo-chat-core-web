@@ -3,7 +3,13 @@ import logo from './logo.svg';
 import './App.css';
 
 import * as HaloChat from '@westudents/halo-chat-core-web'
-import { randomFirstName, randomLastName } from './utils';
+import { getFirebaseConfig, randomFirstName, randomLastName } from './utils';
+
+const firebaseConfig = getFirebaseConfig()
+
+console.log('firebase config porco dio', firebaseConfig)
+
+HaloChat.initializeChat(firebaseConfig)
 
 function App() {
 

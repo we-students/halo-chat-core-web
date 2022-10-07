@@ -1,19 +1,19 @@
 {
     "compilerOptions": {
       "esModuleInterop": true,
-      "module": "CommonJS",
-      "target": "es6",
+      "module": "es6",
+      "target": "es5",
       "sourceMap": true,
       "outDir": "lib",
       "declaration": true,
       "strict": true,
       "resolveJsonModule": true,
-      "baseUrl": "./",
-      "paths": {
-        "@westudents/halo-chat-core-web": ["./example/react-example/node_modules/@westudents/halo-chat-core-web/index"]
-      },
+      // "baseUrl": "./",
+      // "paths": {
+      //   "@westudents/halo-chat-core-web": ["./example/react-example/node_modules/@westudents/halo-chat-core-web/index"]
+      // },
       "moduleResolution": "node"
     },
     "include": ["src"],
-    "exclude": ["node_modules", "**/__tests__/**"]
+    "exclude": ["node_modules", "**/__tests__/**", "example"]
   }
