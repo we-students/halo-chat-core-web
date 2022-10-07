@@ -1,5 +1,4 @@
 import {
-    getFirestore,
     collection,
     doc,
     getDoc,
@@ -14,16 +13,13 @@ import {
     runTransaction,
     deleteDoc,
 } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
-import { getStorage, ref, uploadBytes } from 'firebase/storage'
+import { ref, uploadBytes } from 'firebase/storage'
 import { getUser } from './user'
 import { Agent, MessageType, Room, User } from './types'
 import { CollectionName, MessageTypeEmoji, userToPreview } from './utils'
 import { getAgent } from './agent'
 
-const auth = getAuth()
-const firestoreDB = getFirestore()
-const storage = getStorage()
+import { auth, firestore, storage } from './firebase'
 
 export const createRoomWithUsers = async (users: User[], name?: string): Promise<Room> => {
     const currentFirebaseUser = auth.currentUser
@@ -36,7 +32,7 @@ export const createRoomWithUsers = async (users: User[], name?: string): Promise
     if (users.length === 1) {
         const snapshot = await getDocs(
             query(
-                collection(firestoreDB, CollectionName.ROOMS),
+                collection(firestore, CollectionName.ROOMS),
                 where('scope', '==', 'PRIVATE'),
                 where('users_ids', 'array-contains', currentFirebaseUser.uid),
             ),
@@ -46,7 +42,7 @@ export const createRoomWithUsers = async (users: User[], name?: string): Promise
         if (existingRoom) return existingRoom.data() as Room
     }
 
-    const docRef = doc(firestoreDB, CollectionName.ROOMS)
+    const docRef = doc(firestore, CollectionName.ROOMS)
 
     const room: Room = {
         id: docRef.id,
@@ -72,7 +68,7 @@ export const createRoomWithAgent = async (tag: string): Promise<Room> => {
     const creator = await getUser(currentFirebaseUser.uid)
     if (creator === null) throw new Error('createRoomWithUsers: user not exists')
 
-    const docRef = doc(firestoreDB, CollectionName.ROOMS)
+    const docRef = doc(firestore, CollectionName.ROOMS)
 
     const room: Room = {
         id: docRef.id,
@@ -97,7 +93,7 @@ export const joinAgent = async (roomId: string): Promise<Room> => {
     const agent = await getAgent(currentFirebaseUser.uid)
     if (agent === null) throw new Error('joinAgent: agent not exists')
 
-    await updateDoc(doc(firestoreDB, CollectionName.ROOMS, roomId), {
+    await updateDoc(doc(firestore, CollectionName.ROOMS, roomId), {
         agent: {
             id: agent.id,
             first_name: agent.first_name,
@@ -106,7 +102,7 @@ export const joinAgent = async (roomId: string): Promise<Room> => {
         },
     })
 
-    const res = await getDoc(doc(firestoreDB, CollectionName.ROOMS, roomId))
+    const res = await getDoc(doc(firestore, CollectionName.ROOMS, roomId))
     return res.data() as Room
 }
 
@@ -116,7 +112,7 @@ export const fetchRooms = (onRoomsUpdate: (rooms: Room[]) => void, onError: (err
 
     onSnapshot(
         query(
-            collection(firestoreDB, CollectionName.ROOMS),
+            collection(firestore, CollectionName.ROOMS),
             where('users_ids', 'array-contains', currentFirebaseUser.uid),
         ),
         (snapshop) => {
@@ -136,7 +132,7 @@ export const fetchAgentRooms = (
 
     onSnapshot(
         query(
-            collection(firestoreDB, CollectionName.ROOMS),
+            collection(firestore, CollectionName.ROOMS),
             where('scope', '==', 'AGENT'),
             where('tag', 'in', agent.tags),
         ),
@@ -148,7 +144,7 @@ export const fetchAgentRooms = (
 }
 
 const finalizeSendMessage = async (roomId: string, messageData: any): Promise<void> => {
-    const roomRef = doc(firestoreDB, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
     const messageRef = doc(collection(roomRef, CollectionName.MESSAGES))
     const message: MessageType.Any = {
         id: messageRef.id,
@@ -165,7 +161,7 @@ const finalizeSendMessage = async (roomId: string, messageData: any): Promise<vo
         sent_by: message.created_by,
     }
 
-    await runTransaction(firestoreDB, async (transaction) => {
+    await runTransaction(firestore, async (transaction) => {
         await transaction.set(messageRef, message)
         await transaction.update(roomRef, {
             last_message: messagePreview,
@@ -309,19 +305,19 @@ export const sendFileMessageWithUrl = async ({
 }
 
 export const messageDelivered = async (roomId: string, messageId: string): Promise<void> => {
-    const roomRef = doc(firestoreDB, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
 
     await updateDoc(doc(roomRef, CollectionName.MESSAGES, messageId), { delivered: true })
 }
 
 export const messageRead = async (roomId: string, messageId: string): Promise<void> => {
-    const roomRef = doc(firestoreDB, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
 
     await updateDoc(doc(roomRef, CollectionName.MESSAGES, messageId), { read: true })
 }
 
 export const deleteMessage = async (roomId: string, messageId: string): Promise<void> => {
-    const roomRef = doc(firestoreDB, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
 
     await deleteDoc(doc(roomRef, CollectionName.MESSAGES, messageId))
 }
@@ -331,7 +327,7 @@ export const fetchMessages = (
     onMessagesUpdate: (messages: MessageType.Any[]) => void,
     onError: (error: Error) => void,
 ): void => {
-    const roomRef = doc(firestoreDB, CollectionName.ROOMS, roomId)
+    const roomRef = doc(firestore, CollectionName.ROOMS, roomId)
 
     onSnapshot(
         collection(roomRef, CollectionName.MESSAGES),

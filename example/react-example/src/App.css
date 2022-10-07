@@ -1,0 +1,22 @@
+.App {
+  height: 100vh;
+  background: #fafafa;
+  display: flex;
+  flex-direction: row;
+}
+
+.left-section {
+  flex: 1;
+  background: #005ff0;
+  color: #fafafa;
+}
+
+.right-section {
+  flex: 4;
+}
+
+.auth-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

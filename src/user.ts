@@ -1,24 +1,27 @@
-import {
-    getFirestore,
-    collection,
-    doc,
-    getDoc,
-    setDoc,
-    serverTimestamp,
-    Timestamp,
-    onSnapshot,
-} from 'firebase/firestore'
+import { collection, doc, getDoc, setDoc, serverTimestamp, Timestamp, onSnapshot } from 'firebase/firestore'
+import { signInAnonymously } from 'firebase/auth'
 
 import type { User } from './types'
 import { CollectionName } from './utils'
 
-const firestoreDB = getFirestore()
+import { firestore, auth } from './firebase'
 
+interface LoginPayload {
+    firstName?: string
+    lastName?: string
+    image?: string
+}
 interface CreateUserPayload {
     id: string
     firstName?: string
     lastName?: string
     image?: string
+}
+
+export const login = async (payload: LoginPayload): Promise<User> => {
+    const credentials = await signInAnonymously(auth)
+    const user = await createUser({ id: credentials.user.uid, ...payload })
+    return user
 }
 
 export const createUser = async (payload: CreateUserPayload): Promise<User> => {
@@ -30,18 +33,18 @@ export const createUser = async (payload: CreateUserPayload): Promise<User> => {
         created_at: serverTimestamp() as Timestamp,
     }
 
-    await setDoc(doc(firestoreDB, CollectionName.USERS, payload.id), user)
+    await setDoc(doc(firestore, CollectionName.USERS, payload.id), user)
 
     return user
 }
 
 export const getUser = async (userId: string): Promise<User> => {
-    const docSnap = await getDoc(doc(firestoreDB, CollectionName.USERS, userId))
+    const docSnap = await getDoc(doc(firestore, CollectionName.USERS, userId))
     return docSnap.data() as User
 }
 
 export const fetchUsers = (onUsersUpdate: (users: User[]) => void, onError: (error: Error) => void): void => {
-    const collectionRef = collection(firestoreDB, CollectionName.USERS)
+    const collectionRef = collection(firestore, CollectionName.USERS)
 
     onSnapshot(
         collectionRef,
